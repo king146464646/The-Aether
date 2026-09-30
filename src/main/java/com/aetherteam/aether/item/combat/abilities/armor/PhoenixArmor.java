@@ -173,11 +173,11 @@ public interface PhoenixArmor {
      * @param outcomeStack The replacement {@link ItemStack}.
      */
     private static void breakPhoenixGloves(LivingEntity entity, SlotResult slotResult, ItemStack outcomeStack) {
-        outcomeStack = new ItemStack(outcomeStack.getItemHolder(), 1, slotResult.stack().getComponentsPatch());
+        ItemStack finalOutcomeStack = new ItemStack(outcomeStack.getItemHolder(), 1, slotResult.stack().getComponentsPatch());
         CuriosApi.getCuriosInventory(entity).ifPresent(handler ->
-                handler.setEquippedCurio(slotResult.slotContext().identifier(), slotResult.slotContext().index(), outcomeStack));
+                handler.setEquippedCurio(slotResult.slotContext().identifier(), slotResult.slotContext().index(), finalOutcomeStack));
         if (entity instanceof ServerPlayer serverPlayer) {
-            CriteriaTriggers.INVENTORY_CHANGED.trigger(serverPlayer, serverPlayer.getInventory(), outcomeStack);
+            CriteriaTriggers.INVENTORY_CHANGED.trigger(serverPlayer, serverPlayer.getInventory(), finalOutcomeStack);
         }
     }
 
