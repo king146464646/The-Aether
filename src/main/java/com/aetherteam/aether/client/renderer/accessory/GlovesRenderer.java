@@ -140,6 +140,7 @@ public class GlovesRenderer implements ICurioRenderer, FirstPersonRendering {
         GlovesModel model = player.getSkin().model() == PlayerSkin.Model.SLIM ? this.glovesModelSlim : this.glovesModel;
         ModelPart gloveArm = arm == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
         ModelPart playerArm = arm == HumanoidArm.RIGHT ? humanoidModel.rightArm : humanoidModel.leftArm;
+        model.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
         gloveArm.copyFrom(playerArm);
         gloveArm.xRot = 0.0F;
         gloveArm.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY, color);
@@ -151,6 +152,7 @@ public class GlovesRenderer implements ICurioRenderer, FirstPersonRendering {
 
             GlovesModel trimModel = player.getSkin().model() == PlayerSkin.Model.SLIM ? this.glovesTrimModelSlim : this.glovesTrimModel;
             ModelPart gloveTrimArm = arm == HumanoidArm.RIGHT ? trimModel.rightArm : trimModel.leftArm;
+            trimModel.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
             gloveTrimArm.copyFrom(playerArm);
             gloveTrimArm.render(poseStack, trimConsumer, packedLight, OverlayTexture.NO_OVERLAY);
         }
