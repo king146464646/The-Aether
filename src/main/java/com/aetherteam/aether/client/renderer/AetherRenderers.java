@@ -28,6 +28,7 @@ import com.aetherteam.aether.entity.projectile.dart.GoldenDart;
 import com.aetherteam.aether.entity.projectile.dart.PoisonDart;
 import com.aetherteam.aether.item.AetherItems;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
+import top.theillusivec4.curios.client.render.CuriosLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.*;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
@@ -37,6 +38,7 @@ import net.minecraft.client.renderer.blockentity.ChestRenderer;
 import net.minecraft.client.renderer.blockentity.HangingSignRenderer;
 import net.minecraft.client.renderer.blockentity.SignRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
@@ -224,6 +226,24 @@ public class AetherRenderers {
         if (renderer != null) {
             renderer.addLayer(new ArmorStandCapeLayer(renderer));
         }
+        for (EntityType<?> entityType : event.getEntityTypes()) {
+            EntityRenderer<?> entityRenderer = event.getRenderer(entityType);
+            if (entityRenderer instanceof LivingEntityRenderer<?, ?> livingRenderer) {
+                addCuriosLayer(livingRenderer);
+            }
+        }
+    }
+
+    /**
+     * [CODE COPY] - {@code Curios#addPlayerLayer}, but applied to every living entity renderer instead of only player skins.<br><br>
+     * Curios only adds its own {@link CuriosLayer} to player renderers, so curios equipped on entities such as armor stands
+     * would otherwise never render, even when those entities have curio slots assigned by data packs.
+     *
+     * @param renderer The {@link LivingEntityRenderer} to add the layer to.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void addCuriosLayer(LivingEntityRenderer<?, ?> renderer) {
+        ((LivingEntityRenderer) renderer).addLayer(new CuriosLayer((LivingEntityRenderer) renderer));
     }
 
     /**
