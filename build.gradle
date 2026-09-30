@@ -78,7 +78,7 @@ configurations {
 dependencies {
     implementation "com.aetherteam.nitrogen:nitrogen_internals:${project.nitrogen_version}"
     implementation "com.aetherteam.cumulus:cumulus_menus:${project.cumulus_version}"
-    implementation files("lib/curios-neoforge-9.5.1+1.21.1.jar")
+    implementation "top.theillusivec4.curios:curios-neoforge:${project.curios_version}"
     implementation("gg.essential:partner-mod-integration-1.21.1-neoforge:${project.essential_partner_integration_version}")
 
     jarJar("com.aetherteam.nitrogen:nitrogen_internals:${project.nitrogen_version}") {
@@ -92,6 +92,13 @@ dependencies {
         version {
             strictly "[${project.cumulus_version},)"
             prefer "${project.cumulus_version}"
+        }
+    }
+
+    jarJar("top.theillusivec4.curios:curios-neoforge:${project.curios_version}") {
+        version {
+            strictly "[${project.curios_min_version},)"
+            prefer "${project.curios_version}"
         }
     }
 
@@ -152,7 +159,8 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
         minecraft_version_range: minecraft_version_range,
         neo_version            : neo_version,
         neo_version_range      : neo_version_range,
-        loader_version_range   : loader_version_range
+        loader_version_range   : loader_version_range,
+        curios_min_version     : curios_min_version
     ]
     inputs.properties replaceProperties
     expand replaceProperties

@@ -24,7 +24,7 @@ issueTrackerURL = "${mod_tracker}"
 [[dependencies.${mod_id}]]
     modId = "curios"
     type = "required"
-    versionRange = "[9.5.1+1.21.1,)"
+    versionRange = "[${curios_min_version},)"
     ordering = "NONE"
     side = "BOTH"
 [[dependencies.${mod_id}]]

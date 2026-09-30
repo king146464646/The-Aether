@@ -185,7 +185,9 @@ public class EntityListener {
         int looting = event.getLootingLevel();
         itemDrops.clear();
         for (ItemStack itemStack : EntityHooks.handleEntityAccessoryDrops(entity, itemDropsCopy, recentlyHit, looting)) {
-            itemDrops.add(new ItemEntity(entity.level(), entity.getX(), entity.getY(), entity.getZ(), itemStack));
+            ItemEntity itemEntity = new ItemEntity(entity.level(), entity.getX(), entity.getY(), entity.getZ(), itemStack);
+            itemEntity.setDefaultPickUpDelay();
+            itemDrops.add(itemEntity);
         }
     }
 }

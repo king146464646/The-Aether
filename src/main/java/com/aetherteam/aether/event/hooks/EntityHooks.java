@@ -531,21 +531,22 @@ public class EntityHooks {
      * @param itemStacks   The {@link List} of {@link ItemStack} drops.
      * @param recentlyHit Whether the entity was recently hit, as a {@link Boolean}.
      * @param looting     The {@link Integer} for the looting enchantment value.
-     * @return The new {@link Collection} of {@link ItemEntity} drops.
+     * @return The new {@link List} of {@link ItemStack} drops.
      * @see com.aetherteam.aether.event.listeners.EntityListener#listen(IEventBus)
      */
     public static List<ItemStack> handleEntityAccessoryDrops(LivingEntity entity, List<ItemStack> itemStacks, boolean recentlyHit, int looting) {
         if (entity instanceof Mob mob) {
             String[] allSlots = { GlovesItem.getStaticIdentifier(), PendantItem.getStaticIdentifier() };
             for (String identifier : allSlots) {
-                if (!itemStacks.isEmpty()) {
-                    ItemStack itemStack = itemStacks.getFirst();
+                // Match drops to their slot by item type rather than list order, since Curios'
+                // drop order isn't guaranteed and mobs may only wear one of the two accessories.
+                List<ItemStack> matchedStacks = itemStacks.stream().filter((stack) -> matchesAccessoryIdentifier(identifier, stack)).toList();
+                if (!matchedStacks.isEmpty()) {
+                    ItemStack itemStack = matchedStacks.getFirst();
                     float f = mob.getData(AetherDataAttachments.MOB_ACCESSORY).getEquipmentDropChance(identifier);
                     boolean flag = f > 1.0F;
-                    if (!itemStack.isEmpty()) {
-                        itemStacks.removeIf((stack) -> ItemStack.isSameItemSameComponents(stack, itemStack));
-                    }
-                    if (!itemStack.isEmpty() && itemStack.getEnchantmentLevel(entity.level().holderOrThrow(Enchantments.VANISHING_CURSE)) == 0 && recentlyHit && Math.max(mob.getRandom().nextFloat() - (float) looting * 0.01F, 0.0F) < f) {
+                    itemStacks.removeIf((stack) -> ItemStack.isSameItemSameComponents(stack, itemStack));
+                    if (itemStack.getEnchantmentLevel(entity.level().holderOrThrow(Enchantments.VANISHING_CURSE)) == 0 && recentlyHit && Math.max(mob.getRandom().nextFloat() - (float) looting * 0.01F, 0.0F) < f) {
                         if (!flag && itemStack.isDamageableItem()) {
                             itemStack.setDamageValue(itemStack.getMaxDamage() - mob.getRandom().nextInt(1 + mob.getRandom().nextInt(Math.max(itemStack.getMaxDamage() - 3, 1))));
                         }
@@ -556,6 +557,23 @@ public class EntityHooks {
 
         }
         return itemStacks;
+    }
+
+    /**
+     * Checks whether a dropped stack belongs to the accessory slot the given identifier represents.
+     *
+     * @param identifier The slot identifier {@link String}.
+     * @param stack      The dropped {@link ItemStack}.
+     * @return Whether the stack belongs to the slot, as a {@link Boolean}.
+     * @see EntityHooks#handleEntityAccessoryDrops(LivingEntity, List, boolean, int)
+     */
+    private static boolean matchesAccessoryIdentifier(String identifier, ItemStack stack) {
+        if (identifier.equals(GlovesItem.getStaticIdentifier())) {
+            return stack.getItem() instanceof GlovesItem;
+        } else if (identifier.equals(PendantItem.getStaticIdentifier())) {
+            return stack.getItem() instanceof PendantItem;
+        }
+        return false;
     }
 
     /**

@@ -55,6 +55,11 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
 
     private static final ResourceLocation ACCESSORIES_INVENTORY = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "textures/gui/inventory/accessories.png");
     private static final ResourceLocation ACCESSORIES_INVENTORY_CREATIVE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "textures/gui/inventory/accessories_creative.png");
+    /**
+     * [CODE COPY] - {@code CuriosScreen#CURIO_INVENTORY}.<br><br>
+     * The render toggle buttons draw their eye icons from Curios' own GUI texture, same as in {@link CuriosScreen}.
+     */
+    private static final ResourceLocation CURIO_INVENTORY = ResourceLocation.fromNamespaceAndPath("curios", "textures/gui/curios/inventory.png");
 
     private static final SimpleContainer DESTROY_ITEM_CONTAINER = new SimpleContainer(1);
     private final Map<CurioSlot, RenderButton> renderButtons = new LinkedHashMap<>();
@@ -193,11 +198,8 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
             if (slot instanceof CurioSlot curioSlot && curioSlot.canToggleRender()) {
                 RenderButton slotButton = new RenderButton(curioSlot,
                         slot.x + this.leftPos + 12, slot.y + this.topPos - 1,
-                        8, 8, 75, 0, ACCESSORIES_INVENTORY,
+                        8, 8, 75, 0, CURIO_INVENTORY,
                         (button) -> PacketDistributor.sendToServer(new CPacketToggleRender(curioSlot.getIdentifier(), curioSlot.getSlotIndex())));
-
-                slotButton.visible = curioSlot.isActiveState();
-                slotButton.active = curioSlot.isActiveState();
 
                 this.renderButtons.put(curioSlot, this.addWidget(slotButton));
             }
@@ -274,15 +276,18 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
         return this.getMinecraft().player != null && this.getMinecraft().player.isCreative() ? 18 : 0;
     }
 
+    /**
+     * [CODE COPY] - {@code CuriosScreen#renderTooltip(GuiGraphics, int, int)}.
+     */
     @Override
     protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Minecraft minecraft = this.getMinecraft();
         LocalPlayer clientPlayer = minecraft.player;
         if (clientPlayer != null && clientPlayer.inventoryMenu.getCarried().isEmpty()) {
-            if (!this.isRenderButtonHovered) {
-                if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-                    guiGraphics.renderTooltip(this.font, this.hoveredSlot.getItem(), mouseX, mouseY);
-                }
+            if (this.isRenderButtonHovered) {
+                guiGraphics.renderTooltip(this.font, Component.translatable("gui.curios.toggle"), mouseX, mouseY);
+            } else if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+                guiGraphics.renderTooltip(this.font, this.hoveredSlot.getItem(), mouseX, mouseY);
             }
         }
     }
