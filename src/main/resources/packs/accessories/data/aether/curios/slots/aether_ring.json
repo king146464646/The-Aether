@@ -1,0 +1,7 @@
+{
+  "order": 300,
+  "size": 2,
+  "icon": "aether:slot/ring",
+  "use_native_gui": false,
+  "validators": ["aether:ring_items"]
+}

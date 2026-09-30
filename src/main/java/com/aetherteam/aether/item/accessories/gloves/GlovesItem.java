@@ -5,16 +5,17 @@ import com.aetherteam.aether.AetherConfig;
 import com.aetherteam.aether.inventory.AetherAccessorySlots;
 import com.aetherteam.aether.item.accessories.AccessoryItem;
 import com.aetherteam.aether.item.accessories.SlotIdentifierHolder;
-import io.wispforest.accessories.api.attributes.AccessoryAttributeBuilder;
-import io.wispforest.accessories.api.slot.SlotReference;
-import io.wispforest.accessories.api.slot.SlotTypeReference;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.SlotContext;
 
 public class GlovesItem extends AccessoryItem implements SlotIdentifierHolder {
     public static final ResourceLocation BASE_PUNCH_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "base_punch_damage");
@@ -34,8 +35,10 @@ public class GlovesItem extends AccessoryItem implements SlotIdentifierHolder {
     }
 
     @Override
-    public void getDynamicModifiers(ItemStack stack, SlotReference reference, AccessoryAttributeBuilder builder) {
-        builder.addStackable(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_PUNCH_DAMAGE_ID, this.damage, AttributeModifier.Operation.ADD_VALUE));
+    public Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(SlotContext slotContext, ResourceLocation id, ItemStack stack) {
+        Multimap<Holder<Attribute>, AttributeModifier> modifiers = LinkedHashMultimap.create();
+        modifiers.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_PUNCH_DAMAGE_ID, this.damage, AttributeModifier.Operation.ADD_VALUE));
+        return modifiers;
     }
 
     /**
@@ -73,11 +76,11 @@ public class GlovesItem extends AccessoryItem implements SlotIdentifierHolder {
      * using a static method as it is used in other conditions without access to an instance.
      */
     @Override
-    public SlotTypeReference getIdentifier() {
+    public String getIdentifier() {
         return getStaticIdentifier();
     }
 
-    public static SlotTypeReference getStaticIdentifier() {
-        return AetherConfig.COMMON.use_default_accessories_menu.get() ? new SlotTypeReference("hand") : AetherAccessorySlots.getGlovesSlotType();
+    public static String getStaticIdentifier() {
+        return AetherConfig.COMMON.use_default_accessories_menu.get() ? "hands" : AetherAccessorySlots.getGlovesSlotType();
     }
 }

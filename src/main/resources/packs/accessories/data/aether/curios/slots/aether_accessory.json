@@ -1,0 +1,7 @@
+{
+  "order": 300,
+  "size": 2,
+  "icon": "aether:slot/misc",
+  "use_native_gui": false,
+  "validators": ["aether:accessory_items"]
+}

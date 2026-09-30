@@ -4,9 +4,6 @@ import com.aetherteam.aether.inventory.AetherAccessorySlots;
 import com.aetherteam.aether.mixin.mixins.common.accessor.AbstractContainerMenuAccessor;
 import com.aetherteam.aether.mixin.mixins.common.accessor.CraftingMenuAccessor;
 import com.mojang.datafixers.util.Pair;
-import io.wispforest.accessories.api.AccessoriesAPI;
-import io.wispforest.accessories.api.menu.AccessoriesSlotGenerator;
-import io.wispforest.accessories.api.slot.SlotType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -14,8 +11,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.ISlotType;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
+import top.theillusivec4.curios.common.inventory.CurioSlot;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -62,11 +63,19 @@ public class AetherAccessoriesMenu extends InventoryMenu {
             }
         }
 
-        int x = 77, y = 8; // Adjust these values
-
-        AccessoriesSlotGenerator.of(this::addSlot, x, y, this.owner, AetherAccessorySlots.getPendantSlotType(), AetherAccessorySlots.getCapeSlotType(), AetherAccessorySlots.getShieldSlotType()).column();
-        AccessoriesSlotGenerator.of(this::addSlot, x + 18, y, this.owner, AetherAccessorySlots.getRingSlotType(), AetherAccessorySlots.getGlovesSlotType()).column();
-        AccessoriesSlotGenerator.of(this::addSlot, x, y + (3 * 18), this.owner, AetherAccessorySlots.getAccessorySlotType()).row();
+        // The accessory slots are laid out as two columns of three, with the two accessory slots on a row below them.
+        // Their order here determines the slot indices used by #quickMoveStack and #getEmptyAccessorySlots.
+        CuriosApi.getCuriosInventory(this.owner).ifPresent((handler) -> {
+            Map<String, ICurioStacksHandler> curioMap = handler.getCurios();
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getPendantSlotType(), 0, 77, 8);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getCapeSlotType(), 0, 77, 26);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getShieldSlotType(), 0, 77, 44);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getRingSlotType(), 0, 95, 8);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getRingSlotType(), 1, 95, 26);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getGlovesSlotType(), 0, 95, 44);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getAccessorySlotType(), 0, 77, 62);
+            this.addCurioSlot(curioMap, AetherAccessorySlots.getAccessorySlotType(), 1, 95, 62);
+        });
 
         this.hasButton = hasButton;
 
@@ -98,6 +107,26 @@ public class AetherAccessoriesMenu extends InventoryMenu {
                 return Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
             }
         });
+    }
+
+    /**
+     * Adds a {@link CurioSlot} for the given slot index, if the curio slot exists on the player.
+     *
+     * @param curioMap   The player's curio slots, keyed by slot identifier.
+     * @param identifier The {@link String} identifier of the curio slot.
+     * @param index      The {@link Integer} index of the slot within the curio slot.
+     * @param x          The slot's x position.
+     * @param y          The slot's y position.
+     */
+    private void addCurioSlot(Map<String, ICurioStacksHandler> curioMap, String identifier, int index, int x, int y) {
+        ICurioStacksHandler stacksHandler = curioMap.get(identifier);
+        if (stacksHandler == null) {
+            return;
+        }
+        IDynamicStackHandler stackHandler = stacksHandler.getStacks();
+        if (index < stackHandler.getSlots()) {
+            this.addSlot(new CurioSlot(this.owner, stackHandler, index, identifier, x, y, stacksHandler.getRenders(), stacksHandler.getActiveStates(), stacksHandler.canToggleRendering(), false, false));
+        }
     }
 
     /**
@@ -139,7 +168,7 @@ public class AetherAccessoriesMenu extends InventoryMenu {
             ItemStack itemStack1 = slot.getItem();
             itemStack = itemStack1.copy();
             EquipmentSlot equipmentSlot = player.getEquipmentSlotForItem(itemStack);
-            Collection<SlotType> accessorySlots = AccessoriesAPI.getValidSlotTypes(player, itemStack);
+            Map<String, ISlotType> accessorySlots = CuriosApi.getItemStackSlots(itemStack, player.level());
             if (index == 0) {
                 if (!this.moveItemStackTo(itemStack1, 17, 53, true)) {
                     return ItemStack.EMPTY;
@@ -195,16 +224,16 @@ public class AetherAccessoriesMenu extends InventoryMenu {
         return itemStack;
     }
 
-    private Set<Integer> getEmptyAccessorySlots(Collection<SlotType> slotData) {
+    private Set<Integer> getEmptyAccessorySlots(Map<String, ISlotType> slotData) {
         Set<Integer> slots = new HashSet<>();
-        for (SlotType identifier : slotData) {
-            switch (identifier.name()) {
-                case "aether:pendant_slot" -> slots.add(5);
-                case "aether:cape_slot" -> slots.add(6);
-                case "aether:shield_slot" -> slots.add(7);
-                case "aether:ring_slot" -> slots.addAll(Set.of(8, 9));
-                case "aether:gloves_slot" -> slots.add(10);
-                case "aether:accessory_slot" -> slots.addAll(Set.of(11, 12));
+        for (String identifier : slotData.keySet()) {
+            switch (identifier) {
+                case "aether_pendant" -> slots.add(5);
+                case "aether_cape" -> slots.add(6);
+                case "aether_shield" -> slots.add(7);
+                case "aether_ring" -> slots.addAll(Set.of(8, 9));
+                case "aether_gloves" -> slots.add(10);
+                case "aether_accessory" -> slots.addAll(Set.of(11, 12));
             }
         }
         slots.removeIf(index -> this.slots.get(index).hasItem());

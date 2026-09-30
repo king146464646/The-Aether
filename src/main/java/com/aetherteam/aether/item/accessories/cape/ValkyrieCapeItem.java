@@ -1,23 +1,21 @@
 package com.aetherteam.aether.item.accessories.cape;
 
 import com.aetherteam.aether.item.accessories.abilities.SlowFallAccessory;
-import io.wispforest.accessories.api.events.extra.AllowWalkingOnSnow;
-import io.wispforest.accessories.api.slot.SlotReference;
-import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.SlotContext;
 
-public class ValkyrieCapeItem extends CapeItem implements SlowFallAccessory, AllowWalkingOnSnow {
+public class ValkyrieCapeItem extends CapeItem implements SlowFallAccessory {
     public ValkyrieCapeItem(Properties properties) {
         super("valkyrie_cape", properties);
     }
 
     @Override
-    public void tick(ItemStack stack, SlotReference reference) {
-        this.handleSlowFall(reference.entity());
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        this.handleSlowFall(slotContext.entity());
     }
 
     @Override
-    public TriState allowWalkingOnSnow(ItemStack stack, SlotReference reference) {
-        return TriState.TRUE;
+    public boolean canWalkOnPowderedSnow(SlotContext slotContext, ItemStack stack) {
+        return true;
     }
 }

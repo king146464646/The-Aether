@@ -1,19 +1,25 @@
 package com.aetherteam.aether.inventory;
 
 import com.aetherteam.aether.Aether;
-import com.aetherteam.aether.AetherConfig;
 import com.aetherteam.aether.AetherTags;
-import io.wispforest.accessories.api.AccessoriesAPI;
-import io.wispforest.accessories.api.slot.SlotBasedPredicate;
-import io.wispforest.accessories.api.slot.SlotTypeReference;
-import io.wispforest.accessories.api.slot.UniqueSlotHandling;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.CuriosApi;
 
-import javax.annotation.Nullable;
+/**
+ * Holds the identifiers for the Aether's own curio slots, which are defined by the built-in
+ * {@code packs/accessories} data pack (loaded only when {@link com.aetherteam.aether.AetherConfig.Common#use_default_accessories_menu}
+ * is disabled) rather than being registered from code.
+ * <p>
+ * Also registers the item predicates referenced by those slots' {@code validators}.
+ */
+public class AetherAccessorySlots {
+    public static final String GLOVES_SLOT = "aether_gloves";
+    public static final String RING_SLOT = "aether_ring";
+    public static final String PENDANT_SLOT = "aether_pendant";
+    public static final String CAPE_SLOT = "aether_cape";
+    public static final String SHIELD_SLOT = "aether_shield";
+    public static final String ACCESSORY_SLOT = "aether_accessory";
 
-public class AetherAccessorySlots implements UniqueSlotHandling.RegistrationCallback {
     private static final ResourceLocation GLOVES_PREDICATE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "gloves_items");
     private static final ResourceLocation RING_PREDICATE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "ring_items");
     private static final ResourceLocation PENDANT_PREDICATE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "pendant_items");
@@ -21,90 +27,43 @@ public class AetherAccessorySlots implements UniqueSlotHandling.RegistrationCall
     private static final ResourceLocation SHIELD_PREDICATE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "shield_items");
     private static final ResourceLocation ACCESSORY_PREDICATE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "accessory_items");
 
-    public static final ResourceLocation GLOVES_SLOT_LOCATION = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "gloves_slot");
-    public static final ResourceLocation RING_SLOT_LOCATION = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "ring_slot");
-    public static final ResourceLocation PENDANT_SLOT_LOCATION = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "pendant_slot");
-    public static final ResourceLocation CAPE_SLOT_LOCATION = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "cape_slot");
-    public static final ResourceLocation SHIELD_SLOT_LOCATION = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "shield_slot");
-    public static final ResourceLocation ACCESSORY_SLOT_LOCATION = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "accessory_slot");
-
-    public static final AetherAccessorySlots INSTANCE = new AetherAccessorySlots();
-
-    private static SlotTypeReference GLOVES_SLOT;
-    private static SlotTypeReference RING_SLOT;
-    private static SlotTypeReference PENDANT_SLOT;
-    private static SlotTypeReference CAPE_SLOT;
-    private static SlotTypeReference SHIELD_SLOT;
-    private static SlotTypeReference ACCESSORY_SLOT;
-
     private AetherAccessorySlots() {
-        AccessoriesAPI.registerPredicate(GLOVES_PREDICATE, SlotBasedPredicate.ofItem(item -> new ItemStack(item).is(AetherTags.Items.ACCESSORIES_GLOVES)));
-        AccessoriesAPI.registerPredicate(RING_PREDICATE, SlotBasedPredicate.ofItem(item -> new ItemStack(item).is(AetherTags.Items.ACCESSORIES_RINGS)));
-        AccessoriesAPI.registerPredicate(PENDANT_PREDICATE, SlotBasedPredicate.ofItem(item -> new ItemStack(item).is(AetherTags.Items.ACCESSORIES_PENDANTS)));
-        AccessoriesAPI.registerPredicate(CAPE_PREDICATE, SlotBasedPredicate.ofItem(item -> new ItemStack(item).is(AetherTags.Items.ACCESSORIES_CAPES)));
-        AccessoriesAPI.registerPredicate(SHIELD_PREDICATE, SlotBasedPredicate.ofItem(item -> new ItemStack(item).is(AetherTags.Items.ACCESSORIES_SHIELDS)));
-        AccessoriesAPI.registerPredicate(ACCESSORY_PREDICATE, SlotBasedPredicate.ofItem(item -> new ItemStack(item).is(AetherTags.Items.ACCESSORIES_MISCELLANEOUS)));
     }
 
-    @Override
-    public void registerSlots(UniqueSlotHandling.UniqueSlotBuilderFactory factory) {
-        if (!AetherConfig.COMMON.use_default_accessories_menu.get()) {
-            GLOVES_SLOT = factory.create(GLOVES_SLOT_LOCATION, 1).slotPredicates(GLOVES_PREDICATE).validTypes(
-                EntityType.PLAYER,
-                EntityType.ARMOR_STAND,
-                EntityType.ZOMBIE,
-                EntityType.ZOMBIE_VILLAGER,
-                EntityType.HUSK,
-                EntityType.SKELETON,
-                EntityType.STRAY,
-                EntityType.PIGLIN,
-                EntityType.ZOMBIFIED_PIGLIN
-            ).allowEquipFromUse(true).build();
-            RING_SLOT = factory.create(RING_SLOT_LOCATION, 2).slotPredicates(RING_PREDICATE).validTypes(EntityType.PLAYER).allowEquipFromUse(true).build();
-            PENDANT_SLOT = factory.create(PENDANT_SLOT_LOCATION, 1).slotPredicates(PENDANT_PREDICATE).validTypes(
-                EntityType.PLAYER,
-                EntityType.ARMOR_STAND,
-                EntityType.ZOMBIE,
-                EntityType.ZOMBIE_VILLAGER,
-                EntityType.HUSK,
-                EntityType.SKELETON,
-                EntityType.STRAY,
-                EntityType.PIGLIN,
-                EntityType.ZOMBIFIED_PIGLIN
-            ).allowEquipFromUse(true).build();
-            CAPE_SLOT = factory.create(CAPE_SLOT_LOCATION, 1).slotPredicates(CAPE_PREDICATE).validTypes(EntityType.PLAYER, EntityType.ARMOR_STAND).allowEquipFromUse(true).build();
-            SHIELD_SLOT = factory.create(SHIELD_SLOT_LOCATION, 1).slotPredicates(SHIELD_PREDICATE).validTypes(EntityType.PLAYER, EntityType.ARMOR_STAND).allowEquipFromUse(true).build();
-            ACCESSORY_SLOT = factory.create(ACCESSORY_SLOT_LOCATION, 2).slotPredicates(ACCESSORY_PREDICATE).validTypes(EntityType.PLAYER, EntityType.ARMOR_STAND).allowEquipFromUse(true).build();
-        }
+    /**
+     * Registers the item predicates for the Aether's curio slots. This has to run during mod construction,
+     * as the predicates are resolved when the slot data packs are reloaded.
+     */
+    public static void registerPredicates() {
+        CuriosApi.registerCurioPredicate(GLOVES_PREDICATE, (slotResult) -> slotResult.stack().is(AetherTags.Items.ACCESSORIES_GLOVES));
+        CuriosApi.registerCurioPredicate(RING_PREDICATE, (slotResult) -> slotResult.stack().is(AetherTags.Items.ACCESSORIES_RINGS));
+        CuriosApi.registerCurioPredicate(PENDANT_PREDICATE, (slotResult) -> slotResult.stack().is(AetherTags.Items.ACCESSORIES_PENDANTS));
+        CuriosApi.registerCurioPredicate(CAPE_PREDICATE, (slotResult) -> slotResult.stack().is(AetherTags.Items.ACCESSORIES_CAPES));
+        CuriosApi.registerCurioPredicate(SHIELD_PREDICATE, (slotResult) -> slotResult.stack().is(AetherTags.Items.ACCESSORIES_SHIELDS));
+        CuriosApi.registerCurioPredicate(ACCESSORY_PREDICATE, (slotResult) -> slotResult.stack().is(AetherTags.Items.ACCESSORIES_MISCELLANEOUS));
     }
 
-    @Nullable
-    public static SlotTypeReference getGlovesSlotType() {
+    public static String getGlovesSlotType() {
         return GLOVES_SLOT;
     }
 
-    @Nullable
-    public static SlotTypeReference getRingSlotType() {
+    public static String getRingSlotType() {
         return RING_SLOT;
     }
 
-    @Nullable
-    public static SlotTypeReference getPendantSlotType() {
+    public static String getPendantSlotType() {
         return PENDANT_SLOT;
     }
 
-    @Nullable
-    public static SlotTypeReference getCapeSlotType() {
+    public static String getCapeSlotType() {
         return CAPE_SLOT;
     }
 
-    @Nullable
-    public static SlotTypeReference getShieldSlotType() {
+    public static String getShieldSlotType() {
         return SHIELD_SLOT;
     }
 
-    @Nullable
-    public static SlotTypeReference getAccessorySlotType() {
+    public static String getAccessorySlotType() {
         return ACCESSORY_SLOT;
     }
 }

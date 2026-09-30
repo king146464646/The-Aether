@@ -1,0 +1,6 @@
+{
+  "order": 300,
+  "icon": "aether:slot/cape",
+  "use_native_gui": false,
+  "validators": ["aether:cape_items"]
+}

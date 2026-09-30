@@ -6,25 +6,16 @@ import com.aetherteam.aether.item.AetherItems;
 import com.aetherteam.aether.item.accessories.gloves.GlovesItem;
 import com.aetherteam.aether.item.combat.loot.HammerOfKingbdogzItem;
 import com.aetherteam.aether.item.miscellaneous.bucket.SkyrootBucketItem;
-import io.wispforest.accessories.api.AccessoriesAPI;
-import io.wispforest.accessories.api.AccessoriesCapability;
-import io.wispforest.accessories.api.Accessory;
-import io.wispforest.accessories.api.EquipAction;
-import io.wispforest.accessories.api.slot.SlotReference;
-import io.wispforest.accessories.api.slot.SlotTypeReference;
-import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.DispensibleContainerItem;
 import net.minecraft.world.item.Item;
@@ -38,8 +29,16 @@ import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.type.capability.ICurio;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class AetherDispenseBehaviors {
     /**
@@ -53,7 +52,7 @@ public class AetherDispenseBehaviors {
     };
 
     /**
-     * Based on {@link net.minecraft.world.item.ArmorItem#dispenseArmor(BlockSource, ItemStack)} and {@link io.wispforest.accessories.impl.AccessoriesEventHandler#attemptEquipFromUse(Player, InteractionHand)}.<br><br>
+     * Based on {@link net.minecraft.world.item.ArmorItem#dispenseArmor(BlockSource, ItemStack)}.<br><br>
      * Handles checking if an accessory shot from a dispenser can be equipped, and handles that equipping behavior if it can.
      *
      * @param blockSource The {@link BlockSource} for the dispenser.
@@ -68,22 +67,30 @@ public class AetherDispenseBehaviors {
         } else {
             LivingEntity livingEntity = list.getFirst();
             ItemStack itemStack = stack.split(1);
-            AccessoriesCapability capability = AccessoriesCapability.get(livingEntity);
-            if (capability != null) {
-                Accessory accessory = AccessoriesAPI.getOrDefaultAccessory(itemStack);
-                Pair<SlotReference, EquipAction> equipReference = capability.canEquipAccessory(itemStack, true);
-                if (equipReference != null) {
-                    SlotTypeReference slotTypeReference = new SlotTypeReference(equipReference.first().slotName());
-                    if (accessory.canEquip(itemStack, equipReference.first())) {
-                        accessory.onEquipFromUse(itemStack, equipReference.left());
-                        equipReference.second().equipStack(itemStack.copy());
-                        if (livingEntity instanceof ArmorStand armorStand) {
-                            if (equipReference.first().slotName().equals(GlovesItem.getStaticIdentifier().slotName())) {
-                                armorStand.setShowArms(true);
+            Optional<ICurio> curio = CuriosApi.getCurio(itemStack);
+            Optional<ICuriosItemHandler> inventory = CuriosApi.getCuriosInventory(livingEntity);
+            if (curio.isPresent() && inventory.isPresent()) {
+                ICuriosItemHandler handler = inventory.get();
+                for (Map.Entry<String, ICurioStacksHandler> entry : handler.getCurios().entrySet()) {
+                    String identifier = entry.getKey();
+                    IDynamicStackHandler stackHandler = entry.getValue().getStacks();
+                    for (int slot = 0; slot < stackHandler.getSlots(); slot++) {
+                        if (!stackHandler.getStackInSlot(slot).isEmpty()) {
+                            continue;
+                        }
+                        SlotContext slotContext = new SlotContext(identifier, livingEntity, slot, false, true);
+                        if (curio.get().canEquip(slotContext) && curio.get().canEquipFromUse(slotContext)) {
+                            curio.get().onEquipFromUse(slotContext);
+                            stackHandler.setStackInSlot(slot, itemStack.copy());
+                            if (livingEntity instanceof ArmorStand armorStand) {
+                                if (identifier.equals(GlovesItem.getStaticIdentifier())) {
+                                    armorStand.setShowArms(true);
+                                }
+                            } else if (livingEntity instanceof Mob mob && EntityHooks.canMobSpawnWithAccessories(mob)) {
+                                mob.getData(AetherDataAttachments.MOB_ACCESSORY).setGuaranteedDrop(identifier);
+                                mob.setPersistenceRequired();
                             }
-                        } else if (livingEntity instanceof Mob mob && EntityHooks.canMobSpawnWithAccessories(mob)) {
-                            mob.getData(AetherDataAttachments.MOB_ACCESSORY).setGuaranteedDrop(slotTypeReference);
-                            mob.setPersistenceRequired();
+                            return true;
                         }
                     }
                 }

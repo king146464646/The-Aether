@@ -1,0 +1,6 @@
+{
+  "order": 300,
+  "icon": "aether:slot/pendant",
+  "use_native_gui": false,
+  "validators": ["aether:pendant_items"]
+}

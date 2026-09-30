@@ -60,6 +60,26 @@ public abstract class AetherLanguageProvider extends NitrogenLanguageProvider {
         this.add(this.id + ".attribute.name." + key, name);
     }
 
+    /**
+     * Adds the translation for the name of one of the Aether's own curio slots, as shown by Curios.
+     *
+     * @param key  The curio slot identifier.
+     * @param name The slot's display name.
+     */
+    public void addCuriosIdentifier(String key, String name) {
+        this.add("curios.identifier." + key, name);
+    }
+
+    /**
+     * Adds the translation for the tooltip header shown for an attribute modifier granted by one of the Aether's own curio slots.
+     *
+     * @param key  The curio slot identifier.
+     * @param name The modifier header's display text.
+     */
+    public void addCuriosModifier(String key, String name) {
+        this.add("curios.modifiers." + key, name);
+    }
+
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
         CompletableFuture<?> languageGen = super.run(cache);

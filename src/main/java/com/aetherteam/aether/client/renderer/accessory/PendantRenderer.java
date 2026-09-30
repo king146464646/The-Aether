@@ -5,8 +5,9 @@ import com.aetherteam.aether.client.renderer.accessory.model.PendantModel;
 import com.aetherteam.aether.item.accessories.pendant.PendantItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.wispforest.accessories.api.client.AccessoryRenderer;
-import io.wispforest.accessories.api.slot.SlotReference;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.client.ICurioRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,7 +17,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-public class PendantRenderer implements AccessoryRenderer {
+public class PendantRenderer implements ICurioRenderer {
     private final PendantModel pendant;
 
     public PendantRenderer() {
@@ -24,9 +25,9 @@ public class PendantRenderer implements AccessoryRenderer {
     }
 
     @Override
-    public <M extends LivingEntity> void render(ItemStack stack, SlotReference reference, PoseStack poseStack, EntityModel<M> entityModel, MultiBufferSource multiBufferSource, int packedLight, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+    public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack poseStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource multiBufferSource, int packedLight, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         PendantItem pendantItem = (PendantItem) stack.getItem();
-        AccessoryRenderer.followBodyRotations(reference.entity(), this.pendant);
+        ICurioRenderer.followBodyRotations(slotContext.entity(), this.pendant);
         VertexConsumer consumer = ItemRenderer.getArmorFoilBuffer(multiBufferSource, RenderType.armorCutoutNoCull(pendantItem.getPendantTexture()), false);
         this.pendant.renderToBuffer(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
     }

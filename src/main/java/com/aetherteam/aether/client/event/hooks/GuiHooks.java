@@ -16,7 +16,7 @@ import com.aetherteam.aether.perk.PerkUtil;
 import com.aetherteam.nitrogen.api.users.User;
 import com.aetherteam.nitrogen.api.users.UserData;
 import com.mojang.blaze3d.platform.InputConstants;
-import io.wispforest.accessories.client.gui.AccessoriesScreen;
+import top.theillusivec4.curios.client.gui.CuriosScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -91,7 +91,7 @@ public class GuiHooks {
      */
     @Nullable
     private static AbstractContainerScreen<?> canCreateAccessoryButtonForScreen(Screen screen) {
-        if (screen instanceof InventoryScreen || screen instanceof AccessoriesScreen || screen instanceof CreativeModeInventoryScreen || (screen instanceof AetherAccessoriesScreen && shouldAddButton)) {
+        if (screen instanceof InventoryScreen || screen instanceof CuriosScreen || screen instanceof CreativeModeInventoryScreen || (screen instanceof AetherAccessoriesScreen && shouldAddButton)) {
             return (AbstractContainerScreen<?>) screen;
         } else if (screen instanceof AetherAccessoriesScreen) {
             shouldAddButton = true;

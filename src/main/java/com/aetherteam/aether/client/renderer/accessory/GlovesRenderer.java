@@ -7,8 +7,10 @@ import com.aetherteam.aether.item.accessories.gloves.GlovesItem;
 import com.aetherteam.aether.mixin.mixins.client.accessor.PlayerModelAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.wispforest.accessories.api.client.AccessoryRenderer;
-import io.wispforest.accessories.api.slot.SlotReference;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.client.ICurioRenderer;
+import com.aetherteam.aether.client.renderer.accessory.FirstPersonRendering;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
@@ -34,7 +36,7 @@ import net.minecraft.world.item.armortrim.ArmorTrim;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
-public class GlovesRenderer implements AccessoryRenderer {
+public class GlovesRenderer implements ICurioRenderer, FirstPersonRendering {
     private final GlovesModel glovesModel;
     private final GlovesModel glovesTrimModel;
     private final GlovesModel glovesModelSlim;
@@ -59,7 +61,7 @@ public class GlovesRenderer implements AccessoryRenderer {
      * Renders gloves in third person on the player's model.
      *
      * @param stack             The {@link ItemStack} for the accessory.
-     * @param reference         The {@link SlotReference} for the accessory.
+     * @param slotContext       The {@link SlotContext} for the accessory.
      * @param poseStack         The rendering {@link PoseStack}.
      * @param entityModel       The {@link EntityModel} for the renderer.
      * @param buffer            The rendering {@link MultiBufferSource}.
@@ -72,8 +74,9 @@ public class GlovesRenderer implements AccessoryRenderer {
      * @param headPitch         The {@link Float} for the head pitch rotation.
      */
     @Override
-    public <M extends LivingEntity> void render(ItemStack stack, SlotReference reference, PoseStack poseStack, EntityModel<M> entityModel, MultiBufferSource buffer, int packedLight, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+    public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack poseStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource buffer, int packedLight, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         GlovesItem glovesItem = (GlovesItem) stack.getItem();
+        M entityModel = renderLayerParent.getModel();
         GlovesModel model = this.glovesModel;
         GlovesModel trimModel = this.glovesTrimModel;
         ResourceLocation texture = glovesItem.getGlovesTexture();
@@ -84,8 +87,8 @@ public class GlovesRenderer implements AccessoryRenderer {
             trimModel = playerModelAccessor.aether$getSlim() ? this.glovesTrimModelSlim : this.glovesTrimModel;
         }
 
-        AccessoryRenderer.followBodyRotations(reference.entity(), model);
-        AccessoryRenderer.followBodyRotations(reference.entity(), trimModel);
+        ICurioRenderer.followBodyRotations(slotContext.entity(), model);
+        ICurioRenderer.followBodyRotations(slotContext.entity(), trimModel);
 
         int color = IClientItemExtensions.of(stack).getDefaultDyeColor(stack);
         VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.armorCutoutNoCull(texture));
@@ -106,13 +109,13 @@ public class GlovesRenderer implements AccessoryRenderer {
     }
 
     @Override
-    public boolean shouldRenderInFirstPerson(HumanoidArm arm, ItemStack stack, SlotReference reference) {
-        return !(reference.entity() instanceof Player player) || !player.getData(AetherDataAttachments.AETHER_PLAYER).isWearingInvisibilityCloak();
+    public boolean shouldRenderInFirstPerson(HumanoidArm arm, ItemStack stack, SlotContext slotContext) {
+        return !(slotContext.entity() instanceof Player player) || !player.getData(AetherDataAttachments.AETHER_PLAYER).isWearingInvisibilityCloak();
     }
 
     @Override
-    public <M extends LivingEntity> void renderOnFirstPerson(HumanoidArm arm, ItemStack stack, SlotReference reference, PoseStack matrices, EntityModel<M> model, MultiBufferSource multiBufferSource, int light) {
-        LivingEntity livingEntity = reference.entity();
+    public <M extends LivingEntity> void renderOnFirstPerson(HumanoidArm arm, ItemStack stack, SlotContext slotContext, PoseStack matrices, EntityModel<M> model, MultiBufferSource multiBufferSource, int light) {
+        LivingEntity livingEntity = slotContext.entity();
         if (livingEntity instanceof AbstractClientPlayer player && model instanceof HumanoidModel<M> humanoidModel) {
             this.renderFirstPerson(stack, matrices, multiBufferSource, light, player, humanoidModel, arm);
         }

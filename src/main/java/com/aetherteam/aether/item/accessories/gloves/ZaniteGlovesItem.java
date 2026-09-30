@@ -2,11 +2,16 @@ package com.aetherteam.aether.item.accessories.gloves;
 
 import com.aetherteam.aether.client.AetherSoundEvents;
 import com.aetherteam.aether.item.combat.AetherArmorMaterials;
-import io.wispforest.accessories.api.attributes.AccessoryAttributeBuilder;
-import io.wispforest.accessories.api.slot.SlotReference;
+import com.aetherteam.aether.item.accessories.abilities.SlowFallAccessory;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.SlotContext;
 
 public class ZaniteGlovesItem extends GlovesItem {
     public ZaniteGlovesItem(double punchDamage, Properties properties) {
@@ -14,8 +19,10 @@ public class ZaniteGlovesItem extends GlovesItem {
     }
 
     @Override
-    public void getDynamicModifiers(ItemStack stack, SlotReference reference, AccessoryAttributeBuilder builder) {
-        builder.addStackable(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_PUNCH_DAMAGE_ID, this.calculateIncrease(stack), AttributeModifier.Operation.ADD_VALUE));
+    public Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(SlotContext slotContext, ResourceLocation id, ItemStack stack) {
+        Multimap<Holder<Attribute>, AttributeModifier> modifiers = LinkedHashMultimap.create();
+        modifiers.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_PUNCH_DAMAGE_ID, this.calculateIncrease(stack), AttributeModifier.Operation.ADD_VALUE));
+        return modifiers;
     }
 
     /**

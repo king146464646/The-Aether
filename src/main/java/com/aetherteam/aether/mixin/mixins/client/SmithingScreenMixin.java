@@ -1,10 +1,6 @@
 package com.aetherteam.aether.mixin.mixins.client;
 
 import com.aetherteam.aether.item.accessories.gloves.GlovesItem;
-import io.wispforest.accessories.api.AccessoriesCapability;
-import io.wispforest.accessories.api.AccessoriesContainer;
-import io.wispforest.accessories.api.slot.SlotTypeReference;
-import io.wispforest.accessories.impl.ExpandedSimpleContainer;
 import net.minecraft.client.gui.screens.inventory.SmithingScreen;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -15,6 +11,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 
 import javax.annotation.Nullable;
 
@@ -33,13 +31,11 @@ public class SmithingScreenMixin {
     @Inject(at = @At("HEAD"), method = "updateArmorStandPreview(Lnet/minecraft/world/item/ItemStack;)V", cancellable = true)
     private void updateArmorStandPreview(ItemStack stack, CallbackInfo ci) {
         if (this.armorStandPreview != null) {
-            SlotTypeReference slotTypeReference = GlovesItem.getStaticIdentifier();
-            AccessoriesCapability accessories = AccessoriesCapability.get(this.armorStandPreview);
-            if (accessories != null) {
-                AccessoriesContainer accessoriesContainer = accessories.getContainer(slotTypeReference);
-                if (accessoriesContainer != null) {
-                    ExpandedSimpleContainer simpleContainer = accessoriesContainer.getAccessories();
-                    simpleContainer.setItem(0, ItemStack.EMPTY);
+            String slotIdentifier = GlovesItem.getStaticIdentifier();
+            CuriosApi.getCuriosInventory(this.armorStandPreview).flatMap(handler -> handler.getStacksHandler(slotIdentifier)).ifPresent((stacksHandler) -> {
+                IDynamicStackHandler simpleContainer = stacksHandler.getStacks();
+                if (simpleContainer.getSlots() > 0) {
+                    simpleContainer.setStackInSlot(0, ItemStack.EMPTY);
                     for (EquipmentSlot slot : EquipmentSlot.values()) {
                         this.armorStandPreview.setItemSlot(slot, ItemStack.EMPTY);
                     }
@@ -47,12 +43,12 @@ public class SmithingScreenMixin {
                         ItemStack itemStack = stack.copy();
                         Item item = stack.getItem();
                         if (item instanceof GlovesItem) {
-                            simpleContainer.setItem(0, itemStack);
+                            simpleContainer.setStackInSlot(0, itemStack);
                             ci.cancel();
                         }
                     }
                 }
-            }
+            });
         }
     }
 }

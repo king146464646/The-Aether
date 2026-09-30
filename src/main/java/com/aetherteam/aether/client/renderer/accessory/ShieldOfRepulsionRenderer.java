@@ -9,8 +9,10 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import io.wispforest.accessories.api.client.AccessoryRenderer;
-import io.wispforest.accessories.api.slot.SlotReference;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.client.ICurioRenderer;
+import com.aetherteam.aether.client.renderer.accessory.FirstPersonRendering;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
@@ -33,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.function.BiFunction;
 
-public class ShieldOfRepulsionRenderer implements AccessoryRenderer {
+public class ShieldOfRepulsionRenderer implements ICurioRenderer, FirstPersonRendering {
     public static final BiFunction<ResourceLocation, Boolean, RenderType> SHIELD_OF_REPULSION_RENDER_TYPE = Util.memoize(
         (location, state) -> {
             RenderType.CompositeState renderType = RenderType.CompositeState.builder()
@@ -64,7 +66,7 @@ public class ShieldOfRepulsionRenderer implements AccessoryRenderer {
      * Renders the Shield of Repulsion overlay over the player's model in third person.
      *
      * @param stack             The {@link ItemStack} for the accessory.
-     * @param reference         The {@link SlotReference} for the accessory.
+     * @param slotContext       The {@link SlotContext} for the accessory.
      * @param poseStack         The rendering {@link PoseStack}.
      * @param entityModel       The {@link EntityModel} for the renderer.
      * @param buffer            The rendering {@link MultiBufferSource}.
@@ -77,13 +79,14 @@ public class ShieldOfRepulsionRenderer implements AccessoryRenderer {
      * @param headPitch         The {@link Float} for the head pitch rotation.
      */
     @Override
-    public <M extends LivingEntity> void render(ItemStack stack, SlotReference reference, PoseStack poseStack, EntityModel<M> entityModel, MultiBufferSource buffer, int packedLight, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        LivingEntity livingEntity = reference.entity();
+    public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack poseStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource buffer, int packedLight, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+        LivingEntity livingEntity = slotContext.entity();
         ShieldOfRepulsionItem shield = (ShieldOfRepulsionItem) stack.getItem();
         ResourceLocation texture;
         HumanoidModel<LivingEntity> model;
+        EntityModel<T> parentModel = renderLayerParent.getModel();
 
-        if (livingEntity instanceof AbstractClientPlayer player && entityModel instanceof PlayerModel<?>) {
+        if (livingEntity instanceof AbstractClientPlayer player && parentModel instanceof PlayerModel<?>) {
             var data = player.getData(AetherDataAttachments.AETHER_PLAYER);
             Vec3 motion = player.getDeltaMovement();
             model = player.getSkin().model() == PlayerSkin.Model.SLIM ? this.shieldModelSlim : this.shieldModel;
@@ -101,21 +104,21 @@ public class ShieldOfRepulsionRenderer implements AccessoryRenderer {
                 texture = shield.getShieldOfRepulsionInactiveTexture();
             }
         }
-        entityModel.copyPropertiesTo((EntityModel<M>) model);
+        parentModel.copyPropertiesTo((EntityModel<T>) model);
 
-        AccessoryRenderer.followBodyRotations(reference.entity(), model);
+        ICurioRenderer.followBodyRotations(slotContext.entity(), model);
         VertexConsumer consumer = ItemRenderer.getArmorFoilBuffer(buffer, shieldOfRepulsionRenderType(texture), false);
         model.renderToBuffer(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
     }
 
     @Override
-    public boolean shouldRenderInFirstPerson(HumanoidArm arm, ItemStack stack, SlotReference reference) {
-        return !(reference.entity() instanceof Player player) || !player.getData(AetherDataAttachments.AETHER_PLAYER).isWearingInvisibilityCloak();
+    public boolean shouldRenderInFirstPerson(HumanoidArm arm, ItemStack stack, SlotContext slotContext) {
+        return !(slotContext.entity() instanceof Player player) || !player.getData(AetherDataAttachments.AETHER_PLAYER).isWearingInvisibilityCloak();
     }
 
     @Override
-    public <M extends LivingEntity> void renderOnFirstPerson(HumanoidArm arm, ItemStack stack, SlotReference reference, PoseStack matrices, EntityModel<M> model, MultiBufferSource multiBufferSource, int light) {
-        LivingEntity livingEntity = reference.entity();
+    public <M extends LivingEntity> void renderOnFirstPerson(HumanoidArm arm, ItemStack stack, SlotContext slotContext, PoseStack matrices, EntityModel<M> model, MultiBufferSource multiBufferSource, int light) {
+        LivingEntity livingEntity = slotContext.entity();
         if (livingEntity instanceof AbstractClientPlayer player && model instanceof PlayerModel<M> playerModel) {
             this.renderFirstPerson(stack, matrices, multiBufferSource, light, player, playerModel, arm);
         }

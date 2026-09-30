@@ -67,7 +67,6 @@ import com.aetherteam.aether.world.treedecorator.AetherTreeDecoratorTypes;
 import com.aetherteam.aether.world.trunkplacer.AetherTrunkPlacerTypes;
 import com.google.common.reflect.Reflection;
 import com.mojang.logging.LogUtils;
-import io.wispforest.accessories.api.slot.UniqueSlotHandling;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.cauldron.CauldronInteraction;
@@ -135,6 +134,7 @@ public class Aether {
         bus.addListener(this::registerPackets);
         bus.addListener(this::registerDataMaps);
         bus.addListener(this::packSetup);
+        AetherAccessorySlots.registerPredicates();
         bus.addListener(NewRegistryEvent.class, event -> event.register(AetherAdvancementSoundOverrides.ADVANCEMENT_SOUND_OVERRIDE_REGISTRY));
         bus.addListener(DataPackRegistryEvent.NewRegistry.class, event -> event.dataPackRegistry(AetherMoaTypes.MOA_TYPE_REGISTRY_KEY, MoaType.CODEC, MoaType.CODEC));
 
@@ -202,15 +202,11 @@ public class Aether {
             AetherBlocks.registerPots();
             AetherBlocks.registerFlammability();
             AetherBlocks.registerFluidInteractions();
-
-            AetherItems.registerAccessories();
             AetherItems.setupBucketReplacements();
 
             this.registerDispenserBehaviors();
             this.registerCauldronInteractions();
         });
-
-        UniqueSlotHandling.EVENT.register(AetherAccessorySlots.INSTANCE);
     }
 
     public void registerPackets(RegisterPayloadHandlersEvent event) {
@@ -246,6 +242,7 @@ public class Aether {
 
         // SERVERBOUND
         registrar.playToServer(AerbunnyPuffPacket.TYPE, AerbunnyPuffPacket.STREAM_CODEC, AerbunnyPuffPacket::execute);
+        registrar.playToServer(ClearCuriosPacket.TYPE, ClearCuriosPacket.STREAM_CODEC, ClearCuriosPacket::execute);
         registrar.playToServer(ClearItemPacket.TYPE, ClearItemPacket.STREAM_CODEC, ClearItemPacket::execute);
         registrar.playToServer(HammerProjectileLaunchPacket.TYPE, HammerProjectileLaunchPacket.STREAM_CODEC, HammerProjectileLaunchPacket::execute);
         registrar.playToServer(LoreExistsPacket.TYPE, LoreExistsPacket.STREAM_CODEC, LoreExistsPacket::execute);
@@ -472,7 +469,7 @@ public class Aether {
     }
 
     /**
-     * A built-in data pack to set up the default slots for accessories.<br><br>
+     * A built-in data pack that registers the Aether's own curio slots and assigns them to the player, armor stands and the usual humanoids.<br><br>
      * The pack is loaded and automatically applied if the {@link AetherConfig.Common#use_default_accessories_menu} config isn't enabled.
      */
     private void setupAccessoriesPack(AddPackFindersEvent event) {
@@ -492,7 +489,8 @@ public class Aether {
     }
 
     /**
-     * A built-in data pack to empty the Aether's accessory slot tags and use the default accessory slot tags instead, as well as register the default accessories slots.<br><br>
+     * A built-in data pack that lets the Aether's accessories go into Curios' default slots, gives the default slots to the usual entities,
+     * and widens the ring and charm slots to two.<br><br>
      * The pack is loaded and automatically applied if the {@link AetherConfig.Common#use_default_accessories_menu} config is enabled.
      */
     private void setupAccessoriesOverridePack(AddPackFindersEvent event) {

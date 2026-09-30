@@ -1,9 +1,9 @@
 package com.aetherteam.aether.item.accessories.miscellaneous;
 
 import com.aetherteam.aether.item.accessories.AccessoryItem;
-import io.wispforest.accessories.api.slot.SlotReference;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.SlotContext;
 
 public class IronBubbleItem extends AccessoryItem {
     public IronBubbleItem(Properties properties) {
@@ -13,12 +13,12 @@ public class IronBubbleItem extends AccessoryItem {
     /**
      * Keeps the wearer's air supply at 30 if they're underwater.
      *
+     * @param slotContext The {@link SlotContext} of the accessory.
      * @param stack       The accessory {@link ItemStack}.
-     * @param reference The {@link SlotReference} of the accessory.
      */
     @Override
-    public void tick(ItemStack stack, SlotReference reference) {
-        LivingEntity livingEntity = reference.entity();
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        LivingEntity livingEntity = slotContext.entity();
         if (livingEntity.isUnderWater()) {
             livingEntity.setAirSupply(30);
         }

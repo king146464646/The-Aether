@@ -22,6 +22,12 @@ issueTrackerURL = "${mod_tracker}"
     ordering = "NONE"
     side = "BOTH"
 [[dependencies.${mod_id}]]
+    modId = "curios"
+    type = "required"
+    versionRange = "[9.5.1+1.21.1,)"
+    ordering = "NONE"
+    side = "BOTH"
+[[dependencies.${mod_id}]]
     modId = "minecraft"
     type = "required"
     versionRange="${minecraft_version_range}"

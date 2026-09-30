@@ -7,16 +7,12 @@ import com.aetherteam.aether.client.gui.screen.perks.AetherCustomizationsScreen;
 import com.aetherteam.aether.client.gui.screen.perks.MoaSkinsScreen;
 import com.aetherteam.aether.inventory.menu.AetherAccessoriesMenu;
 import com.aetherteam.aether.mixin.mixins.client.accessor.ScreenAccessor;
+import com.aetherteam.aether.network.packet.serverbound.ClearCuriosPacket;
 import com.aetherteam.aether.network.packet.serverbound.ClearItemPacket;
 import com.aetherteam.aether.perk.PerkUtil;
 import com.aetherteam.nitrogen.api.users.User;
 import com.aetherteam.nitrogen.api.users.UserData;
 import com.mojang.blaze3d.platform.InputConstants;
-import io.wispforest.accessories.api.menu.AccessoriesBasedSlot;
-import io.wispforest.accessories.client.gui.AccessoriesScreen;
-import io.wispforest.accessories.client.gui.ToggleButton;
-import io.wispforest.accessories.networking.AccessoriesNetworking;
-import io.wispforest.accessories.networking.server.NukeAccessories;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
@@ -39,6 +35,10 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import top.theillusivec4.curios.client.gui.CuriosScreen;
+import top.theillusivec4.curios.client.gui.RenderButton;
+import top.theillusivec4.curios.common.inventory.CurioSlot;
+import top.theillusivec4.curios.common.network.client.CPacketToggleRender;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
@@ -57,7 +57,7 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
     private static final ResourceLocation ACCESSORIES_INVENTORY_CREATIVE = ResourceLocation.fromNamespaceAndPath(Aether.MODID, "textures/gui/inventory/accessories_creative.png");
 
     private static final SimpleContainer DESTROY_ITEM_CONTAINER = new SimpleContainer(1);
-    private final Map<AccessoriesBasedSlot, ToggleButton> cosmeticButtons = new LinkedHashMap<>();
+    private final Map<CurioSlot, RenderButton> renderButtons = new LinkedHashMap<>();
     private final RecipeBookComponent recipeBookComponent = new RecipeBookComponent();
     private boolean widthTooNarrow;
     private boolean buttonClicked;
@@ -186,17 +186,20 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
 
     private void updateRenderButtons() {
         ScreenAccessor screenAccessor = (ScreenAccessor) this;
-        screenAccessor.aether$getNarratables().removeIf(widget -> widget instanceof ToggleButton);
-        this.children().removeIf(widget -> widget instanceof ToggleButton);
-        this.cosmeticButtons.clear();
+        screenAccessor.aether$getNarratables().removeIf(widget -> widget instanceof RenderButton);
+        this.children().removeIf(widget -> widget instanceof RenderButton);
+        this.renderButtons.clear();
         for (Slot slot : this.menu.slots) {
-            if (slot instanceof AccessoriesBasedSlot accessoriesSlot) {
-                ToggleButton slotButton = ToggleButton.ofSlot(slot.x + this.leftPos + 13, slot.y + this.topPos - 2, 0, accessoriesSlot);
+            if (slot instanceof CurioSlot curioSlot && curioSlot.canToggleRender()) {
+                RenderButton slotButton = new RenderButton(curioSlot,
+                        slot.x + this.leftPos + 12, slot.y + this.topPos - 1,
+                        8, 8, 75, 0, ACCESSORIES_INVENTORY,
+                        (button) -> PacketDistributor.sendToServer(new CPacketToggleRender(curioSlot.getIdentifier(), curioSlot.getSlotIndex())));
 
-                slotButton.visible = accessoriesSlot.isActive();
-                slotButton.active = accessoriesSlot.isActive();
+                slotButton.visible = curioSlot.isActiveState();
+                slotButton.active = curioSlot.isActiveState();
 
-                this.cosmeticButtons.put(accessoriesSlot, this.addWidget(slotButton));
+                this.renderButtons.put(curioSlot, this.addWidget(slotButton));
             }
         }
     }
@@ -211,13 +214,13 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
             super.render(guiGraphics, mouseX, mouseY, partialTicks);
             this.getRecipeBookComponent().renderGhostRecipe(guiGraphics, this.getGuiLeft(), this.getGuiTop(), false, partialTicks);
 
-            for (var cosmeticButton : this.cosmeticButtons.values()) {
-                cosmeticButton.render(guiGraphics, mouseX, mouseY, partialTicks);
+            for (var renderButton : this.renderButtons.values()) {
+                renderButton.renderButtonOverlay(guiGraphics, mouseX, mouseY, partialTicks);
             }
 
             boolean isButtonHovered = false;
             for (GuiEventListener widget : this.children()) {
-                if (widget instanceof ToggleButton renderButton) {
+                if (widget instanceof RenderButton renderButton) {
                     if (renderButton.isHovered()) {
                         isButtonHovered = true;
                     }
@@ -227,8 +230,8 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
             LocalPlayer clientPlayer = Minecraft.getInstance().player;
             if (!this.isRenderButtonHovered && clientPlayer != null && clientPlayer.inventoryMenu.getCarried().isEmpty() && this.getSlotUnderMouse() != null) {
                 Slot slot = this.getSlotUnderMouse();
-                if (slot instanceof AccessoriesBasedSlot accessorySlot && !slot.hasItem()) {
-                    guiGraphics.renderTooltip(this.font, Component.translatable(accessorySlot.slotType().translation()), mouseX, mouseY);
+                if (slot instanceof CurioSlot curioSlot && !slot.hasItem()) {
+                    guiGraphics.renderTooltip(this.font, Component.translatable("curios.identifier." + curioSlot.getIdentifier()), mouseX, mouseY);
                 }
             }
 
@@ -355,7 +358,7 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
                     if (slot == this.destroyItemSlot && this.destroyItemSlot != null && flag) {
                         for (int j = 0; j < this.getMinecraft().player.inventoryMenu.getItems().size(); ++j) {
                             if (this.nukeCoolDown <= 0) {
-                                AccessoriesNetworking.sendToServer(new NukeAccessories());
+                                PacketDistributor.sendToServer(new ClearCuriosPacket());
                                 this.nukeCoolDown = 10;
                             }
                             this.getMinecraft().gameMode.handleCreativeModeItemAdd(ItemStack.EMPTY, j);
@@ -398,7 +401,7 @@ public class AetherAccessoriesScreen extends EffectRenderingInventoryScreen<Aeth
     public static Tuple<Integer, Integer> getButtonOffset(Screen screen) {
         int x = 0;
         int y = 0;
-        if (screen instanceof InventoryScreen || screen instanceof AccessoriesScreen) {
+        if (screen instanceof InventoryScreen || screen instanceof CuriosScreen) {
             x = AetherConfig.CLIENT.button_inventory_x.get();
             y = AetherConfig.CLIENT.button_inventory_y.get();
         }

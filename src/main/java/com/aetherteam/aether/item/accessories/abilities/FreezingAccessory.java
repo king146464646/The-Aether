@@ -5,8 +5,6 @@ import com.aetherteam.aether.event.AetherEventDispatch;
 import com.aetherteam.aether.event.FreezeEvent;
 import com.aetherteam.aether.recipe.AetherRecipeTypes;
 import com.aetherteam.aether.recipe.recipes.block.AccessoryFreezableRecipe;
-import io.wispforest.accessories.api.AccessoriesAPI;
-import io.wispforest.accessories.api.slot.SlotReference;
 import net.minecraft.commands.CacheableFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -19,6 +17,8 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.Optional;
 
@@ -26,15 +26,15 @@ public interface FreezingAccessory extends FreezingBehavior<ItemStack> {
     /**
      * Freezes blocks around the wearer in a radius of 1.9 as long as they aren't flying or in spectator. This also damages the Ice accessory for every 3 blocks frozen.
      *
-     * @param context The {@link SlotReference} of the accessory.
+     * @param context The {@link SlotContext} of the accessory.
      * @param stack   The accessory {@link ItemStack}.
      */
-    default void freezeTick(SlotReference context, ItemStack stack) {
+    default void freezeTick(SlotContext context, ItemStack stack) {
         LivingEntity livingEntity = context.entity();
         if (!(livingEntity instanceof Player player) || (!player.getAbilities().flying && !player.isSpectator())) {
             int damage = this.freezeBlocks(livingEntity.level(), livingEntity.blockPosition(), stack, 1.9F);
             if (livingEntity.level() instanceof ServerLevel serverLevel) {
-                context.getStack().hurtAndBreak(damage / 3, serverLevel, livingEntity, (item) -> AccessoriesAPI.breakStack(context));
+                stack.hurtAndBreak(damage / 3, serverLevel, livingEntity, (item) -> CuriosApi.broadcastCurioBreakEvent(context));
             }
         }
     }

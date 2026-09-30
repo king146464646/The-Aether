@@ -2,17 +2,6 @@ package com.aetherteam.aether.event.listeners;
 
 import com.aetherteam.aether.Aether;
 import com.aetherteam.aether.event.hooks.EntityHooks;
-import io.wispforest.accessories.api.AccessoriesAPI;
-import io.wispforest.accessories.api.AccessoriesCapability;
-import io.wispforest.accessories.api.Accessory;
-import io.wispforest.accessories.api.events.OnDeathCallback;
-import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -23,11 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
@@ -36,9 +21,9 @@ import net.neoforged.neoforge.event.entity.EntityMountEvent;
 import net.neoforged.neoforge.event.entity.EntityStruckByLightningEvent;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.*;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import top.theillusivec4.curios.api.event.CurioDropsEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,16 +46,7 @@ public class EntityListener {
         bus.addListener(EntityListener::onDropExperience);
         bus.addListener(EntityListener::onEffectApply);
         bus.addListener(EntityListener::onEntitySplit);
-        bus.addListener(EntityListener::onLoadPlayerFile);
-
-        OnDeathCallback.EVENT.register((currentState, entity, capability, damageSource, droppedStacks) -> {
-            List<ItemStack> droppedStacksCopy = new ArrayList<>(droppedStacks);
-            boolean recentlyHit = entity.hurtMarked;
-            int looting = EnchantmentHelper.getEnchantmentLevel(entity.level().registryAccess().holderOrThrow(Enchantments.LOOTING), entity);
-            droppedStacks.clear();
-            droppedStacks.addAll(EntityHooks.handleEntityAccessoryDrops(entity, droppedStacksCopy, recentlyHit, looting));
-            return TriState.DEFAULT;
-        });
+        bus.addListener(EntityListener::onCurioDrops);
     }
 
     /**
@@ -193,74 +169,18 @@ public class EntityListener {
         }
     }
 
-    public static void onLoadPlayerFile(PlayerEvent.LoadFromFile event) {
-        Player player = event.getEntity();
-        if (player instanceof ServerPlayer serverPlayer) {
-            CompoundTag playerTag = serverPlayer.server.getWorldData().getLoadedPlayerTag();
-            if (playerTag == null) return;
-
-            var capsTag = tryGetCapsTag(playerTag);
-            if (capsTag.isEmpty()) return;
-
-            CompoundTag curiosInventoryTag = capsTag.get().getCompound("curios:inventory");
-            if (curiosInventoryTag.getBoolean("AccessoriesEncoded") || !curiosInventoryTag.contains("Curios")) return;
-
-            Tag curiosTag = curiosInventoryTag.get("Curios");
-            if (curiosTag instanceof ListTag curiosListTag) {
-                for (Tag tag : curiosListTag) {
-                    if (tag instanceof CompoundTag compoundTag && compoundTag.contains("StacksHandler") && compoundTag.contains("Identifier")) {
-                        CompoundTag stacksHandlerTag = compoundTag.getCompound("StacksHandler");
-                        if (!stacksHandlerTag.contains("Stacks")) continue;
-
-                        CompoundTag stacksTag = stacksHandlerTag.getCompound("Stacks");
-                        if (!stacksTag.contains("Items")) continue;
-
-                        Tag itemsTag = stacksTag.get("Items");
-                        if (itemsTag instanceof ListTag listTag) {
-                            for (Tag itemTag : listTag) {
-                                if (itemTag instanceof CompoundTag itemCompoundTag) {
-                                    if (!itemCompoundTag.contains("id")) continue;
-
-                                    var location = ResourceLocation.parse(itemCompoundTag.getString("id"));
-                                    if (!location.getNamespace().equals(Aether.MODID)) continue;
-
-                                    Item item = BuiltInRegistries.ITEM.get(location);
-                                    if (item == Items.AIR) continue;
-
-                                    ItemStack stack = new ItemStack(item);
-                                    AccessoriesCapability accessories = AccessoriesCapability.get(player);
-                                    if (accessories == null) continue;
-
-                                    Accessory accessory = AccessoriesAPI.getOrDefaultAccessory(stack);
-                                    var equipReference = accessories.canEquipAccessory(stack, true);
-                                    if (equipReference == null) continue;
-
-                                    if (accessory.canEquip(stack, equipReference.first())) {
-                                        equipReference.second().equipStack(stack.copy());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private static Optional<CompoundTag> tryGetCapsTag(CompoundTag playerTag) {
-        if (playerTag == null) return Optional.empty();
-
-        CompoundTag capsTag = null;
-        if (playerTag.contains("ForgeCaps")) {
-            capsTag = playerTag.getCompound("ForgeCaps");
-        } else if (playerTag.contains("neoforge:attachments")) {
-            capsTag = playerTag.getCompound("neoforge:attachments");
-        } else {
-            return Optional.empty();
-        }
-
-        return capsTag.contains("curios:inventory")
-            ? Optional.of(capsTag)
-            : Optional.empty();
+    /**
+     * Applies Aether's own accessory drop chances on top of Curios' drop handling.
+     *
+     * @see EntityHooks#handleEntityAccessoryDrops(LivingEntity, List, boolean, int)
+     */
+    public static void onCurioDrops(CurioDropsEvent event) {
+        LivingEntity entity = event.getEntity();
+        Collection<ItemEntity> itemDrops = event.getDrops();
+        List<ItemStack> itemDropsCopy = new ArrayList<>(itemDrops);
+        boolean recentlyHit = event.isRecentlyHit();
+        int looting = event.getLootingLevel();
+        itemDrops.clear();
+        itemDrops.addAll(EntityHooks.handleEntityAccessoryDrops(entity, itemDropsCopy, recentlyHit, looting));
     }
 }

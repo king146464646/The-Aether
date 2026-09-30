@@ -5,7 +5,6 @@ import com.aetherteam.aether.AetherConfig;
 import com.aetherteam.aether.inventory.AetherAccessorySlots;
 import com.aetherteam.aether.item.accessories.AccessoryItem;
 import com.aetherteam.aether.item.accessories.SlotIdentifierHolder;
-import io.wispforest.accessories.api.slot.SlotTypeReference;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -35,11 +34,11 @@ public class PendantItem extends AccessoryItem implements SlotIdentifierHolder {
      * using a static method as it is used in other conditions without access to an instance.
      */
     @Override
-    public SlotTypeReference getIdentifier() {
+    public String getIdentifier() {
         return getStaticIdentifier();
     }
 
-    public static SlotTypeReference getStaticIdentifier() {
-        return AetherConfig.COMMON.use_default_accessories_menu.get() ? new SlotTypeReference("necklace") : AetherAccessorySlots.getPendantSlotType();
+    public static String getStaticIdentifier() {
+        return AetherConfig.COMMON.use_default_accessories_menu.get() ? "necklace" : AetherAccessorySlots.getPendantSlotType();
     }
 }

@@ -5,12 +5,7 @@ import com.aetherteam.aether.item.accessories.cape.CapeItem;
 import com.aetherteam.aether.item.accessories.gloves.GlovesItem;
 import com.aetherteam.aether.item.accessories.pendant.PendantItem;
 import com.aetherteam.aether.mixin.mixins.common.accessor.MinecraftServerAccessor;
-import com.mojang.datafixers.util.Pair;
-import io.wispforest.accessories.Accessories;
-import io.wispforest.accessories.api.AccessoriesCapability;
-import io.wispforest.accessories.api.AccessoriesContainer;
-import io.wispforest.accessories.api.slot.SlotTypeReference;
-import io.wispforest.accessories.impl.ExpandedSimpleContainer;
+import com.aetherteam.aether.item.EquipmentUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.resources.ResourceLocation;
@@ -20,12 +15,24 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
+
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.StreamSupport;
 
 public class AetherMixinHooks {
+    /**
+     * Set while a player arm is being rendered for an invisible wearer, to avoid rendering accessories on it twice.
+     *
+     * @see com.aetherteam.aether.mixin.mixins.client.ItemInHandRendererMixin
+     */
+    @ApiStatus.Internal
+    public static boolean RENDERING_ACCESSORY = false;
     /**
      * Checks whether a cape accessory is visible.
      *
@@ -34,22 +41,22 @@ public class AetherMixinHooks {
      * @see com.aetherteam.aether.mixin.mixins.client.PlayerSkinMixin
      */
     public static ItemStack isCapeVisible(LivingEntity livingEntity) {
-        AccessoriesCapability accessories = AccessoriesCapability.get(livingEntity);
-        if (accessories != null) {
-            AccessoriesContainer accessoriesContainer = accessories.getContainer(CapeItem.getStaticIdentifier());
-
-            if (accessoriesContainer != null) {
-                ExpandedSimpleContainer simpleAccessoriesContainer = accessoriesContainer.getAccessories();
-                ExpandedSimpleContainer simpleCosmeticsContainer = accessoriesContainer.getCosmeticAccessories();
-
-                Pair<Integer, ItemStack> stack = StreamSupport.stream(simpleAccessoriesContainer.spliterator(), true).findFirst().orElse(null);
-                Pair<Integer, ItemStack> cosmeticStack = StreamSupport.stream(simpleCosmeticsContainer.spliterator(), true).findFirst().orElse(null);
-                if (cosmeticStack != null && !cosmeticStack.getSecond().isEmpty() && Accessories.config().clientOptions.showCosmeticAccessories()) {
-                    stack = cosmeticStack;
-                }
-                if (stack != null) {
-                    if (accessoriesContainer.shouldRender(stack.getFirst())) {
-                        return stack.getSecond();
+        Optional<SlotResult> slotResult = EquipmentUtil.findFirstAccessory(livingEntity, (item) -> item.getItem() instanceof CapeItem);
+        if (slotResult.isPresent()) {
+            SlotResult result = slotResult.get();
+            String identifier = result.slotContext().identifier();
+            int index = result.slotContext().index();
+            Optional<ICuriosItemHandler> itemHandler = CuriosApi.getCuriosInventory(livingEntity);
+            if (itemHandler.isPresent()) {
+                Optional<ICurioStacksHandler> stacksHandler = itemHandler.get().getStacksHandler(identifier);
+                if (stacksHandler.isPresent()) {
+                    ICurioStacksHandler handler = stacksHandler.get();
+                    if (index < handler.getRenders().size() && handler.getRenders().get(index)) {
+                        ItemStack cosmeticStack = handler.getCosmeticStacks().getStackInSlot(index);
+                        if (handler.hasCosmetic() && !cosmeticStack.isEmpty()) {
+                            return cosmeticStack;
+                        }
+                        return result.stack();
                     }
                 }
             }
@@ -129,7 +136,7 @@ public class AetherMixinHooks {
      * @param stack        The accessory {@link ItemStack}.
      * @return The slot identifier {@link String}.
      */
-    public static SlotTypeReference getIdentifierForItem(LivingEntity livingEntity, ItemStack stack) {
+    public static String getIdentifierForItem(LivingEntity livingEntity, ItemStack stack) {
         if (stack.getItem() instanceof GlovesItem glovesItem) {
             return glovesItem.getIdentifier();
         } else if (stack.getItem() instanceof PendantItem pendantItem && (livingEntity.getType() == EntityType.PIGLIN || livingEntity.getType() == EntityType.ZOMBIFIED_PIGLIN)) {
@@ -142,18 +149,16 @@ public class AetherMixinHooks {
      * Gets an accessory from an entity.
      *
      * @param livingEntity The {@link LivingEntity} to get the accessory from.
-     * @param identifier The {@link SlotTypeReference} for the slot identifier.
+     * @param identifier   The {@link String} for the slot identifier.
      * @return The accessory {@link ItemStack} gotten from the entity.
      */
-    public static ItemStack getItemByIdentifier(LivingEntity livingEntity, SlotTypeReference identifier) {
-        AccessoriesCapability accessories = AccessoriesCapability.get(livingEntity);
-        if (accessories != null) {
-            AccessoriesContainer accessoriesContainer = accessories.getContainer(identifier);
-            if (accessoriesContainer != null) {
-                return accessoriesContainer.getAccessories().getItem(0);
-            }
-        }
-        return ItemStack.EMPTY;
+    public static ItemStack getItemByIdentifier(LivingEntity livingEntity, String identifier) {
+        return CuriosApi.getCuriosInventory(livingEntity)
+                .flatMap(handler -> handler.getStacksHandler(identifier))
+                .map(ICurioStacksHandler::getStacks)
+                .filter(stackHandler -> 0 < stackHandler.getSlots())
+                .map(stackHandler -> stackHandler.getStackInSlot(0))
+                .orElse(ItemStack.EMPTY);
     }
 
     /**
@@ -161,15 +166,13 @@ public class AetherMixinHooks {
      *
      * @param livingEntity The {@link LivingEntity} to equip to.
      * @param itemStack    The {@link ItemStack} to equip.
-     * @param identifier   The {@link SlotTypeReference} for the slot identifier.
+     * @param identifier   The {@link String} for the slot identifier.
      */
-    public static void setItemByIdentifier(LivingEntity livingEntity, ItemStack itemStack, SlotTypeReference identifier) {
-        AccessoriesCapability accessories = AccessoriesCapability.get(livingEntity);
-        if (accessories != null) {
-            AccessoriesContainer accessoriesContainer = accessories.getContainer(identifier);
-            if (accessoriesContainer != null) {
-                accessoriesContainer.getAccessories().setItem(0, itemStack);
-            }
-        }
+    public static void setItemByIdentifier(LivingEntity livingEntity, ItemStack itemStack, String identifier) {
+        CuriosApi.getCuriosInventory(livingEntity)
+                .flatMap(handler -> handler.getStacksHandler(identifier))
+                .map(ICurioStacksHandler::getStacks)
+                .filter(stackHandler -> 0 < stackHandler.getSlots())
+                .ifPresent(stackHandler -> stackHandler.setStackInSlot(0, itemStack));
     }
 }

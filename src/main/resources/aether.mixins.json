@@ -48,6 +48,8 @@
     "client.ElytraLayerMixin",
     "client.LogoRendererMixin",
     "client.PauseScreenMixin",
+    "client.PlayerRendererMixin",
+    "client.ItemInHandRendererMixin",
     "client.SmithingScreenMixin",
     "client.SplashRendererMixin",
     "client.TippableArrowRendererMixin",

@@ -2,17 +2,16 @@ package com.aetherteam.aether.item.accessories;
 
 import com.aetherteam.aether.block.dispenser.AetherDispenseBehaviors;
 import com.aetherteam.aether.client.AetherSoundEvents;
-import io.wispforest.accessories.api.Accessory;
-import io.wispforest.accessories.api.SoundEventData;
-import io.wispforest.accessories.api.slot.SlotReference;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.DispenserBlock;
-import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.type.capability.ICurio;
+import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
-public class AccessoryItem extends Item implements Accessory {
+public class AccessoryItem extends Item implements ICurioItem {
     private final Holder<SoundEvent> soundEventSupplier;
 
     public AccessoryItem(Properties properties) {
@@ -26,12 +25,12 @@ public class AccessoryItem extends Item implements Accessory {
     }
 
     @Override
-    public boolean canEquipFromUse(ItemStack stack) {
+    public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
         return true;
     }
 
     @Override
-    public @Nullable SoundEventData getEquipSound(ItemStack stack, SlotReference reference) {
-        return new SoundEventData(this.soundEventSupplier, 1.0F, 1.0F);
+    public ICurio.SoundInfo getEquipSound(SlotContext slotContext, ItemStack stack) {
+        return new ICurio.SoundInfo(this.soundEventSupplier.value(), 1.0F, 1.0F);
     }
 }

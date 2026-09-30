@@ -6,8 +6,6 @@ import com.aetherteam.aether.attachment.AetherPlayerAttachment;
 import com.aetherteam.aether.item.AetherItems;
 import com.aetherteam.aether.item.EquipmentUtil;
 import com.aetherteam.nitrogen.ConstantsUtil;
-import io.wispforest.accessories.api.AccessoriesAPI;
-import io.wispforest.accessories.api.slot.SlotEntryReference;
 import net.minecraft.client.player.Input;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,6 +16,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
 
 public interface ShieldOfRepulsionAccessory {
     /**
@@ -34,7 +34,7 @@ public interface ShieldOfRepulsionAccessory {
         if (hitResult.getType() == HitResult.Type.ENTITY && hitResult instanceof EntityHitResult entityHitResult) {
             if (entityHitResult.getEntity() instanceof LivingEntity impactedLiving) {
                 if (projectile.getType().is(AetherTags.Entities.DEFLECTABLE_PROJECTILES)) {
-                    SlotEntryReference slotResult = EquipmentUtil.getAccessory(impactedLiving, AetherItems.SHIELD_OF_REPULSION.get());
+                    SlotResult slotResult = EquipmentUtil.getAccessory(impactedLiving, AetherItems.SHIELD_OF_REPULSION.get());
                     if (slotResult != null) {
                         Vec3 motion = impactedLiving.getDeltaMovement();
                         if (impactedLiving instanceof Player player) {
@@ -63,15 +63,15 @@ public interface ShieldOfRepulsionAccessory {
      *
      * @param projectile     The impacting {@link Projectile}.
      * @param impactedLiving The impacted {@link LivingEntity}.
-     * @param slotResult     The {@link SlotEntryReference} of the Shield of Repulsion.
+     * @param slotResult     The {@link SlotResult} of the Shield of Repulsion.
      */
-    private static void handleDeflection(ProjectileImpactEvent event, Projectile projectile, LivingEntity impactedLiving, SlotEntryReference slotResult) {
+    private static void handleDeflection(ProjectileImpactEvent event, Projectile projectile, LivingEntity impactedLiving, SlotResult slotResult) {
         event.setCanceled(true);
         if (!impactedLiving.equals(projectile.getOwner())) {
             projectile.deflect(ProjectileDeflection.REVERSE, impactedLiving, projectile.getOwner(), false);
             projectile.setDeltaMovement(projectile.getDeltaMovement().scale(0.25));
             if (impactedLiving.level() instanceof ServerLevel serverLevel) {
-                slotResult.stack().hurtAndBreak(1, serverLevel, impactedLiving, (item) -> AccessoriesAPI.breakStack(slotResult.reference()));
+                slotResult.stack().hurtAndBreak(1, serverLevel, impactedLiving, (item) -> CuriosApi.broadcastCurioBreakEvent(slotResult.slotContext()));
             }
         }
     }
