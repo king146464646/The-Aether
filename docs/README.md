@@ -2,6 +2,9 @@
 # The Aether
 
 ### This project Accessories to Curios API
+### If you want to load the "The Aether: Genesis" and "Deep Aether" mods, please go to their Curios versions:
+The Aether: Genesis: https://github.com/king146464646/The-Aether-Genesis-CuriosAPI
+Deep Aether: https://github.com/king146464646/Deep-Aether-CuriosAPI
 
 The Aether Team presents the original Aether mod! Up to date for modern Minecraft versions and fully compatible with multiplayer. The Aether is a dimension of floating islands high in the sky, where you can begin a new survival adventure packed with new ores, mythical creatures and perilous Dungeons! All you need to do is construct a Glowstone frame and add water to light the mystical portal, and once you step in you’ll be transported immediately to the luscious hostile paradise of the Aether! The Aether Team has ensured to maintain the Aether as close to its original state from 2011 as possible, while still making improvements for modern versions. The team also continues to work on the mod's sequel, [The Aether II](https://github.com/The-Aether-Team/The-Aether-II).
 
