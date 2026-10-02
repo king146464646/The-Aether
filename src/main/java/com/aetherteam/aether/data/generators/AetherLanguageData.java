@@ -1324,7 +1324,7 @@ public class AetherLanguageData extends AetherLanguageProvider {
         this.addServerConfig("modpack", "portal_return_dimension_ID", "Sets the ID of the dimension that the Aether Portal will return the player to");
 
 
-        this.addCommonConfig("gameplay", "use_default_accessories_menu", "Use the default accessories menu instead of the Aether's Accessories Menu. WARNING: Do not enable this without emptying your equipped accessories");
+        this.addCommonConfig("gameplay", "use_curios_menu", "Use the default Curios menu instead of the Aether's Accessories Menu. WARNING: Do not enable this without emptying your equipped accessories");
         this.addCommonConfig("gameplay", "start_with_portal", "On world creation, the player is given an Aether Portal Frame item to automatically go to the Aether with");
         this.addCommonConfig("gameplay", "enable_startup_loot", "When the player enters the Aether, they are given a Book of Lore and Golden Parachutes as starting loot");
         this.addCommonConfig("gameplay", "reposition_slider_message", "Moves the message for when a player attacks the Slider with an incorrect item to be above the hotbar instead of in chat");
@@ -1380,8 +1380,8 @@ public class AetherLanguageData extends AetherLanguageProvider {
         this.addPackTitle("tips", "Aether Tips");
         this.addPackTitle("colorblind", "Aether Colorblind Textures");
         this.addPackTitle("imm_ptl_compat", "Immersive Portals Compatibility");
-        this.addPackTitle("aether_accessories", "Unique Aether Accessories");
-        this.addPackTitle("default_accessories", "Default Accessories Override");
+        this.addPackTitle("accessories", "Aether Accessories");
+        this.addPackTitle("curios", "Aether Curios Override");
         this.addPackTitle("freezing", "Aether Temporary Freezing");
         this.addPackTitle("ruined_portal", "Aether Ruined Portals");
         this.addPackTitle("tooltips", "Aether Item Tooltips");
@@ -1393,8 +1393,8 @@ public class AetherLanguageData extends AetherLanguageProvider {
         this.addPackDescription("tips", "Moves Pro Tips to Tips' UI");
         this.addPackDescription("colorblind", "Changes textures for color blindness accessibility");
         this.addPackDescription("imm_ptl_compat", "Compatibility data for Immersive Portals");
-        this.addPackDescription("aether_accessories", "Register default accessories");
-        this.addPackDescription("default_accessories", "Replace Aether's accessory menu");
+        this.addPackDescription("accessories", "Register default accessories");
+        this.addPackDescription("curios", "Replace Accessories Menu with Curios' menu");
         this.addPackDescription("freezing", "Ice Accessories create temporary blocks");
         this.addPackDescription("ruined_portal", "Generate ruined glowstone portals");
         this.addPackDescription("tooltips", "Add item ability tooltips");

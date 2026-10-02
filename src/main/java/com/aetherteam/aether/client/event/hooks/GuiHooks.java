@@ -62,7 +62,7 @@ public class GuiHooks {
      * @see com.aetherteam.aether.client.event.listeners.GuiListener#onGuiInitialize(ScreenEvent.Init.Post)
      */
     public static boolean isAccessoryButtonEnabled() {
-        return !AetherConfig.CLIENT.disable_accessory_button.get() && !AetherConfig.COMMON.use_default_accessories_menu.get();
+        return !AetherConfig.CLIENT.disable_accessory_button.get() && !AetherConfig.COMMON.use_curios_menu.get();
     }
 
     /**

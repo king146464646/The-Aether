@@ -43,6 +43,6 @@ public class ShieldOfRepulsionItem extends AccessoryItem implements SlotIdentifi
     }
 
     public static String getStaticIdentifier() {
-        return AetherConfig.COMMON.use_default_accessories_menu.get() ? "body" : AetherAccessorySlots.getShieldSlotType();
+        return AetherConfig.COMMON.use_curios_menu.get() ? "body" : AetherAccessorySlots.getShieldSlotType();
     }
 }

@@ -39,6 +39,6 @@ public class PendantItem extends AccessoryItem implements SlotIdentifierHolder {
     }
 
     public static String getStaticIdentifier() {
-        return AetherConfig.COMMON.use_default_accessories_menu.get() ? "necklace" : AetherAccessorySlots.getPendantSlotType();
+        return AetherConfig.COMMON.use_curios_menu.get() ? "necklace" : AetherAccessorySlots.getPendantSlotType();
     }
 }

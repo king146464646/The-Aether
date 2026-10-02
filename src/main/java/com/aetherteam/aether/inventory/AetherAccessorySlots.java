@@ -7,7 +7,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 
 /**
  * Holds the identifiers for the Aether's own curio slots, which are defined by the built-in
- * {@code packs/accessories} data pack (loaded only when {@link com.aetherteam.aether.AetherConfig.Common#use_default_accessories_menu}
+ * {@code packs/accessories} data pack (loaded only when {@link com.aetherteam.aether.AetherConfig.Common#use_curios_menu}
  * is disabled) rather than being registered from code.
  * <p>
  * Also registers the item predicates referenced by those slots' {@code validators}.
